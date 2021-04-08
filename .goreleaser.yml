@@ -9,6 +9,11 @@ builds:
     - CGO_ENABLED=0
   main: ./main.go
 
+  goarch:
+    - arm64
+  goos:
+    - linux
+
 archives:
 - replacements:
     # darwin: Darwin
