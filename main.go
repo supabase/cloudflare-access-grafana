@@ -39,11 +39,12 @@ type CloudflareClaim struct {
 
 // Config is the general configuration (read from environment variables)
 type Config struct {
-	AuthDomain    string
-	PolicyAUD     string
-	ForwardHeader string
-	ForwardHost   string
-	ListenAddr    string `envconfig:"ADDR"`
+	AuthDomain        string `required:"true"`
+	PolicyAUD         string `required:"true"`
+	ForwardHeader     string `required:"true"`
+	ForwardHost       string `required:"true"`
+	ListenAddr        string `envconfig:"ADDR" required:"true"`
+	AdditionalHeaders string // Allows you to do without a reverse proxy for very simple scenarios
 }
 
 var (
@@ -106,10 +107,14 @@ func main() {
 		keySet   = oidc.NewRemoteKeySet(ctx, certsURL)
 		verifier = oidc.NewVerifier(cfg.AuthDomain, keySet, config)
 	)
+	var staticHeaders = strings.Split(cfg.AdditionalHeaders, "|")
 
 	director := func(req *http.Request) {
 		req.Header.Add("X-Forwarded-Host", req.Host)
 		req.Header.Add("X-Origin-Host", "cloudflare-access-proxy")
+		for i := 0; i < len(staticHeaders); i+=2 {
+			req.Header.Add(staticHeaders[i], staticHeaders[i+1])
+		}
 		// TODO: should we trust on the Schema of the original request?
 		req.URL.Scheme = "http"
 
