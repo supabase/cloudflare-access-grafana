@@ -107,7 +107,13 @@ func main() {
 		keySet   = oidc.NewRemoteKeySet(ctx, certsURL)
 		verifier = oidc.NewVerifier(cfg.AuthDomain, keySet, config)
 	)
-	var staticHeaders = strings.Split(cfg.AdditionalHeaders, "|")
+	var staticHeaders = make([]string, 0)
+	if len(strings.TrimSpace(cfg.AdditionalHeaders)) > 0 {
+		staticHeaders = strings.Split(cfg.AdditionalHeaders, "|")
+		if len(staticHeaders) % 2 != 0 {
+			log.Fatalf("Invalid config value for AdditionalHeaders: [%s]", cfg.AdditionalHeaders)
+		}
+	}
 
 	director := func(req *http.Request) {
 		req.Header.Add("X-Forwarded-Host", req.Host)
